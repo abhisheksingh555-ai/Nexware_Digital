@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Outsourcing from "../../images/Outsourcing.webp"
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -123,7 +124,7 @@ const SoftwareOutsourcing = () => {
             
             {/* Main Image Asset */}
             <img 
-              src="/src/images/Outsourcing.webp" 
+              src={Outsourcing} 
               alt="Tech Nexware Digital Software Engineering Ecosystem" 
               className="w-full h-full object-cover mix-blend-luminosity opacity-40 group-hover:opacity-60 group-hover:scale-102 transition-all duration-500"
             />
