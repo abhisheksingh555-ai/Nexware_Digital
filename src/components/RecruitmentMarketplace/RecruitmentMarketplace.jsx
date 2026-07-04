@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import recruitment from "../../images/Recruitment.webp"
 
 // Register ScrollTrigger plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -63,7 +64,7 @@ const RecruitmentMarketplace = () => {
             <div className="absolute inset-0 bg-slate-900/20 z-10 group-hover:opacity-0 transition-opacity duration-300" />
             
             <img 
-              src="/src/images/Recruitment.webp" 
+              src={recruitment}
               alt="Tech Nexware Digital Recruitment Platform" 
               className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300 relative z-0"
             />
