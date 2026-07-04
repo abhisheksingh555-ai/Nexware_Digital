@@ -114,18 +114,13 @@ const TechNexwareHero = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-start pt-2">
             <a 
-              href="#contact"
+              href="contact-us"
               className="group inline-flex items-center justify-center gap-2 px-6 py-2.5 sm:px-8 sm:py-3 bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-lg text-sm sm:text-base shadow-md shadow-blue-600/20 transition-all duration-200 transform hover:-translate-y-0.5 w-full sm:w-auto"
             >
               Schedule Consultation
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
-            <a 
-              href="#services"
-              className="inline-flex items-center justify-center px-6 py-2.5 sm:px-8 sm:py-3 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 hover:text-white font-semibold rounded-lg text-sm sm:text-base transition-all duration-200 w-full sm:w-auto"
-            >
-              Explore Solutions
-            </a>
+            
           </div>
         </div>
 

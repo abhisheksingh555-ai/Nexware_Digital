@@ -143,10 +143,6 @@ const ProcessWorkflow = () => {
             Ready to integrate? Kick off your risk-free pilot phase within <span className="text-slate-200 font-bold">48 hours</span>.
           </p>
         </div>
-        {/* TIGHTENED: Button padding tailored down from px-5 py-2.5 to px-4 py-2 */}
-        <button className="w-full sm:w-auto px-4 py-2 bg-linear-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm rounded-lg transition-all duration-200 shadow-md">
-          Get Started Risk-Free
-        </button>
       </div>
 
     </div>

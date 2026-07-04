@@ -1,36 +1,45 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useService } from "../../context/ServiceContext";
+
+const ChevronIcon = ({ open }) => (
+  <svg
+    className={`w-4 h-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const MenuIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
 
 const Navbar = () => {
+  const { activeServiceId, setActiveServiceId } = useService();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null); 
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileIndustriesOpen, setMobileIndustriesOpen] = useState(false);
-  
-  // Track the current path state for highlighting active links
-  const [activePath, setActivePath] = useState('/');
 
   useEffect(() => {
-    // Sync starting location path
-    const currentPath = window.location.pathname.replace(/^\/|\/$/g, '') || '/';
-    setActivePath(currentPath);
+    document.body.style.overflow = isOpen ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isOpen]);
 
-    const handleLocationChange = () => {
-      const updatedPath = window.location.pathname.replace(/^\/|\/$/g, '') || '/';
-      setActivePath(updatedPath);
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
-  // Prevent background content scrolling when mobile menu takes over the page
   useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add('overflow-hidden');
-    } else {
-      document.body.classList.remove('overflow-hidden');
+    if (!isOpen) {
+      setMobileServicesOpen(false);
+      setMobileIndustriesOpen(false);
     }
-    return () => document.body.classList.remove('overflow-hidden');
   }, [isOpen]);
 
   const serviceLinks = [
@@ -45,7 +54,6 @@ const Navbar = () => {
     { label: 'Cyber Security Solutions', href: 'services-security' },
   ];
 
-  // UPDATED: Every item now points to the 'industries' page directly
   const industryLinks = [
     { label: 'Healthcare Technology', href: 'industries' },
     { label: 'Fintech & Financial', href: 'industries' },
@@ -53,218 +61,161 @@ const Navbar = () => {
     { label: 'IT Sector Outsourcing', href: 'industries' },
     { label: 'Logistics & Supply Chain', href: 'industries' },
     { label: 'Retail & E-Commerce', href: 'industries' },
-    { label: 'Automotive Insurtech', href: 'industries' },
-    { label: 'Energy & Utilities', href: 'industries' },
   ];
 
-  // Helper check function to find if sub-items are active
-  const isServiceActive = serviceLinks.some(link => link.href === activePath);
-  const isIndustryActive = activePath === 'industries';
-
   return (
-    <nav className="relative bg-slate-900 border-b border-slate-800 text-white z-50 select-none">
+    <nav className="relative bg-slate-900 border-b border-slate-800 text-white z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
-          {/* LEFT SIDE: Brand Image Logo & Company Name */}
+          {/* LOGO */}
           <div className="shrink-0 flex items-center gap-3">
-            <img 
-              src="/favicon-v2.png" 
-              alt="Tech Nexware Digital Logo" 
-              className="h-11 w-11 sm:h-12 sm:w-12 object-contain transition-transform duration-200"
-            />
-            <span className="font-bold text-base sm:text-lg tracking-tight whitespace-nowrap text-white">
-              Tech Nexware <span className="bg-linear-to-r from-blue-400 to-sky-400 bg-clip-text text-transparent">Digital</span>
-            </span>
+            <img src="/favicon-v2.png" alt="Logo" className="h-10 w-10" />
+            <Link to="/" className="font-bold text-lg">Tech Nexware Digital</Link>
           </div>
 
-          {/* RIGHT SIDE: Desktop Navigation with Active Indicator States */}
-          <div className="hidden lg:flex items-center gap-1 xl:gap-2 h-full">
-            <a 
-              href="/" 
-              className={`px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors ${activePath === '/' ? 'text-sky-400 bg-slate-800/40' : 'text-slate-300 hover:text-white'}`}
-            >
-              Home
-            </a>
-            <a 
-              href="/about-us" 
-              className={`px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors ${activePath === 'about-us' ? 'text-sky-400 bg-slate-800/40' : 'text-slate-300 hover:text-white'}`}
-            >
-              About Us
-            </a>
+          {/* DESKTOP NAV */}
+          <div className="hidden lg:flex items-center gap-6 h-full">
+            <Link to="/" className="text-slate-300 hover:text-white transition-colors">Home</Link>
+            <Link to="/about-us" className="text-slate-300 hover:text-white transition-colors">About Us</Link>
 
-            {/* INDUSTRIES DROPDOWN */}
-            <div 
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setActiveDropdown('industries')}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <a 
-                href="/industries"
-                className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors focus:outline-none ${isIndustryActive ? 'text-sky-400' : 'text-slate-300 hover:text-white'}`}
-              >
-                Industries
-                <svg className={`h-4 w-4 transform transition-transform duration-200 ${activeDropdown === 'industries' ? 'rotate-180 text-sky-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </a>
-              
-              <div className={`absolute top-14 left-0 w-60 bg-slate-800 border border-slate-700 rounded-xl p-2 shadow-xl transition-all duration-200 origin-top ${activeDropdown === 'industries' ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
-                {industryLinks.map((ind, idx) => (
-                  <a 
-                    key={idx} 
-                    href={`/${ind.href}`} 
-                    className={`block px-3 py-2 rounded-lg text-xs xl:text-sm transition-colors ${activePath === ind.href ? 'text-sky-400 bg-slate-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-700/50'}`}
-                  >
-                    {ind.label}
-                  </a>
+            <div className="relative h-full flex items-center" onMouseEnter={() => setActiveDropdown('industries')} onMouseLeave={() => setActiveDropdown(null)}>
+              <button className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors">
+                Industries <ChevronIcon open={activeDropdown === 'industries'} />
+              </button>
+              <div className={`absolute top-14 left-0 w-60 bg-slate-800 rounded-xl p-2 shadow-xl transition-all duration-200 origin-top ${activeDropdown === 'industries' ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}>
+                {industryLinks.map((ind, i) => (
+                  <Link key={i} to={`/${ind.href}`} className="block px-3 py-2 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors">{ind.label}</Link>
                 ))}
               </div>
             </div>
 
-            {/* SERVICES DROPDOWN */}
-            <div 
-              className="relative h-full flex items-center"
-              onMouseEnter={() => setActiveDropdown('services')}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <button className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors focus:outline-none ${isServiceActive ? 'text-sky-400' : 'text-slate-300 hover:text-white'}`}>
-                Services
-                <svg className={`h-4 w-4 transform transition-transform duration-200 ${activeDropdown === 'services' ? 'rotate-180 text-sky-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            <div className="relative h-full flex items-center" onMouseEnter={() => setActiveDropdown('services')} onMouseLeave={() => setActiveDropdown(null)}>
+              <button className={`flex items-center gap-1 transition-colors ${activeServiceId?.startsWith('services-') ? 'text-sky-400' : 'text-slate-300 hover:text-white'}`}>
+                Services <ChevronIcon open={activeDropdown === 'services'} />
               </button>
-              
-              <div className={`absolute top-14 left-0 w-64 bg-slate-800 border border-slate-700 rounded-xl p-2 shadow-xl transition-all duration-200 origin-top ${activeDropdown === 'services' ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
+              <div className={`absolute top-14 left-0 w-64 bg-slate-800 rounded-xl p-2 shadow-xl transition-all duration-200 origin-top ${activeDropdown === 'services' ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}>
                 {serviceLinks.map((srv) => (
-                  <a 
-                    key={srv.label} 
-                    href={`/${srv.href}`} 
-                    className={`block px-3 py-2 rounded-lg text-xs xl:text-sm transition-colors ${activePath === srv.href ? 'text-sky-400 bg-slate-900/40' : 'text-slate-300 hover:text-white hover:bg-slate-700/50'}`}
+                  <Link
+                    key={srv.href}
+                    to={`/${srv.href}`}
+                    onClick={() => setActiveServiceId(srv.href)}
+                    className={`block px-3 py-2 rounded-lg transition-colors ${activeServiceId === srv.href ? 'bg-slate-700 text-sky-400' : 'text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                   >
                     {srv.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
 
-            <a 
-              href="/clients" 
-              className={`px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors ${activePath === 'clients' ? 'text-sky-400 bg-slate-800/40' : 'text-slate-300 hover:text-white'}`}
-            >
-              Clients
-            </a>
-            
-            <a 
-              href="/contact-us" 
-              className={`px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors ${activePath === 'contact-us' ? 'text-sky-400 bg-slate-800/40' : 'text-slate-300 hover:text-white'}`}
+            <Link to="/clients" className="text-slate-300 hover:text-white transition-colors">Clients</Link>
+            <Link
+              to="/contact-us"
+              className="ml-2 px-4 py-2 rounded-full bg-sky-500 text-white text-sm font-semibold hover:bg-sky-400 transition-colors"
             >
               Contact Us
-            </a>
+            </Link>
           </div>
 
-          {/* HAMBURGER TRIGGER BUTTON */}
-          <div className="flex lg:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              type="button"
-              className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors z-50"
-            >
-              {isOpen ? (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              ) : (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-              )}
-            </button>
-          </div>
-
+          {/* Mobile Hamburger */}
+          <button
+            className="lg:hidden p-2 -mr-2 rounded-lg hover:bg-slate-800 transition-colors"
+            onClick={() => setIsOpen(true)}
+            aria-label="Open menu"
+          >
+            <MenuIcon />
+          </button>
         </div>
       </div>
 
-      {/* FULL PAGE MOBILE OVERLAY DISPLAY */}
-      <div 
-        className={`lg:hidden fixed top-16 left-0 w-full h-[calc(100vh-4rem)] bg-slate-900 z-40 transition-all duration-300 ease-in-out ${
-          isOpen ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible -translate-x-full'
-        }`}
+      {/* MOBILE BACKDROP */}
+      <div
+        className={`lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* MOBILE SLIDE-IN PANEL */}
+      <div
+        className={`lg:hidden fixed top-0 right-0 h-full w-[85%] max-w-sm bg-slate-900 z-50 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="px-6 py-6 space-y-3 h-full overflow-y-auto pb-20">
-          <a 
-            href="/" 
-            onClick={() => setIsOpen(false)} 
-            className={`block px-4 py-3 rounded-xl text-lg font-semibold ${activePath === '/' ? 'text-sky-400 bg-slate-800' : 'text-slate-300'}`}
+        <div className="shrink-0 flex items-center justify-between px-5 h-16 border-b border-slate-800">
+          <span className="font-bold text-lg">Menu</span>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-2 -mr-2 rounded-lg hover:bg-slate-800 transition-colors"
+            aria-label="Close menu"
           >
-            Home
-          </a>
-          
-          <a 
-            href="/about-us" 
-            onClick={() => setIsOpen(false)} 
-            className={`block px-4 py-3 rounded-xl text-lg font-semibold ${activePath === 'about-us' ? 'text-sky-400 bg-slate-800' : 'text-slate-300'}`}
-          >
-            About Us
-          </a>
+            <CloseIcon />
+          </button>
+        </div>
 
-          {/* COLLAPSIBLE MOBILE INDUSTRIES */}
-          <div className="rounded-xl overflow-hidden">
-            <div className={`flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-left ${isIndustryActive ? 'text-sky-400 bg-slate-800/20' : 'text-slate-300'}`}>
-              <a href="/industries" onClick={() => setIsOpen(false)} className="flex-1">
-                Industries
-              </a>
-              <button 
-                onClick={() => setMobileIndustriesOpen(!mobileIndustriesOpen)} 
-                className="pl-4 focus:outline-none"
-              >
-                <svg className={`h-5 w-5 transform transition-transform ${mobileIndustriesOpen ? 'rotate-180 text-sky-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-            </div>
-            <div className={`pl-6 bg-slate-800/30 space-y-1 transition-all duration-200 overflow-hidden ${mobileIndustriesOpen ? 'max-h-[350px] py-2' : 'max-h-0'}`}>
-              {industryLinks.map((ind, idx) => (
-                <a 
-                  key={idx} 
-                  href={`/${ind.href}`} 
-                  onClick={() => setIsOpen(false)} 
-                  className={`block px-4 py-2.5 rounded-lg text-base ${activePath === ind.href ? 'text-sky-400 font-medium' : 'text-slate-400'}`}
-                >
-                  {ind.label}
-                </a>
-              ))}
-            </div>
-          </div>
+        {/* Scrollable content area — this is what guarantees everything is reachable,
+            no matter how many links get added later */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-1 p-4">
+            <Link to="/" onClick={() => setIsOpen(false)} className="px-3 py-3 rounded-lg text-slate-200 hover:bg-slate-800 transition-colors">Home</Link>
+            <Link to="/about-us" onClick={() => setIsOpen(false)} className="px-3 py-3 rounded-lg text-slate-200 hover:bg-slate-800 transition-colors">About Us</Link>
 
-          {/* COLLAPSIBLE MOBILE SERVICES */}
-          <div className="rounded-xl overflow-hidden">
-            <button 
-              onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
-              className={`flex items-center justify-between w-full px-4 py-3 text-lg font-semibold text-left ${isServiceActive ? 'text-sky-400 bg-slate-800/20' : 'text-slate-300'}`}
+            {/* Industries accordion — grid-rows trick auto-sizes to actual content height */}
+            <button
+              onClick={() => setMobileIndustriesOpen(!mobileIndustriesOpen)}
+              className="flex items-center justify-between px-3 py-3 rounded-lg text-slate-200 hover:bg-slate-800 transition-colors"
+              aria-expanded={mobileIndustriesOpen}
             >
-              <span>Services</span>
-              <svg className={`h-5 w-5 transform transition-transform ${mobileServicesOpen ? 'rotate-180 text-sky-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              Industries <ChevronIcon open={mobileIndustriesOpen} />
             </button>
-            <div className={`pl-6 bg-slate-800/30 space-y-1 transition-all duration-200 overflow-hidden ${mobileServicesOpen ? 'max-h-[400px] py-2' : 'max-h-0'}`}>
-              {serviceLinks.map((srv) => (
-                <a 
-                  key={srv.label} 
-                  href={`/${srv.href}`} 
-                  onClick={() => setIsOpen(false)} 
-                  className={`block px-4 py-2.5 rounded-lg text-base ${activePath === srv.href ? 'text-sky-400 font-medium' : 'text-slate-400'}`}
-                >
-                  {srv.label}
-                </a>
-              ))}
+            <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${mobileIndustriesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+              <div className="overflow-hidden">
+                <div className="flex flex-col gap-1 py-1">
+                  {industryLinks.map((i, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/${i.href}`}
+                      onClick={() => setIsOpen(false)}
+                      className="px-6 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors text-sm"
+                    >
+                      {i.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
 
-          <a 
-            href="/clients" 
-            onClick={() => setIsOpen(false)} 
-            className={`block px-4 py-3 rounded-xl text-lg font-semibold ${activePath === 'clients' ? 'text-sky-400 bg-slate-800' : 'text-slate-300'}`}
-          >
-            Clients
-          </a>
-          
-          <a 
-            href="/contact-us" 
-            onClick={() => setIsOpen(false)} 
-            className={`block px-4 py-3 rounded-xl text-lg font-semibold ${activePath === 'contact-us' ? 'text-sky-400 bg-slate-800' : 'text-slate-300'}`}
-          >
-            Contact Us
-          </a>
+            {/* Services accordion — same fix applied */}
+            <button
+              onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+              className="flex items-center justify-between px-3 py-3 rounded-lg text-slate-200 hover:bg-slate-800 transition-colors"
+              aria-expanded={mobileServicesOpen}
+            >
+              Services <ChevronIcon open={mobileServicesOpen} />
+            </button>
+            <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${mobileServicesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+              <div className="overflow-hidden">
+                <div className="flex flex-col gap-1 py-1">
+                  {serviceLinks.map((s) => (
+                    <Link
+                      key={s.href}
+                      to={`/${s.href}`}
+                      onClick={() => { setActiveServiceId(s.href); setIsOpen(false); }}
+                      className={`px-6 py-2.5 rounded-lg text-sm transition-colors ${activeServiceId === s.href ? 'text-sky-400 bg-slate-800' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Link to="/clients" onClick={() => setIsOpen(false)} className="px-3 py-3 rounded-lg text-slate-200 hover:bg-slate-800 transition-colors">Clients</Link>
+
+            <Link
+              to="/contact-us"
+              onClick={() => setIsOpen(false)}
+              className="mt-3 px-3 py-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-semibold text-center transition-colors"
+            >
+              Contact Us
+            </Link>
+          </div>
         </div>
       </div>
     </nav>
