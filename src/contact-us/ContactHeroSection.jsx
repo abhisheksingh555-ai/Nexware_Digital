@@ -1,9 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import contact_background_image from "../images/contact-us.webp";
 
 export default function ContactHeroSection() {
   const canvasRef = useRef(null);
   const cardRef = useRef(null);
+
+  // ── Form State ──
+  const [formData, setFormData] = useState({
+    name: '',
+    companyName: '',
+    email: '',
+    phoneNumber: '',
+    message: '',
+  });
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState({ type: null, message: '' }); // type: 'success' | 'error' | null
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // WebGL / Interactive Mesh Canvas Effect
   useEffect(() => {
@@ -52,7 +64,7 @@ export default function ContactHeroSection() {
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
-      
+
       points.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -115,13 +127,13 @@ export default function ContactHeroSection() {
     const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     const xc = rect.width / 2;
     const yc = rect.height / 2;
-    
-    const angleX = (yc - y) / 25; 
+
+    const angleX = (yc - y) / 25;
     const angleY = (x - xc) / 25;
-    
+
     card.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.01, 1.01, 1.01)`;
   };
 
@@ -131,9 +143,121 @@ export default function ContactHeroSection() {
     card.style.transform = `perspective(1000px) rotateX(4deg) rotateY(-4deg) rotateZ(0deg) scale3d(1, 1, 1)`;
   };
 
+  // ── Field-by-field validation ──
+  const validateField = (fieldName, value) => {
+    switch (fieldName) {
+      case 'name':
+        if (!value.trim()) return 'Please enter your name.';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters.';
+        return '';
+
+      case 'email': {
+        if (!value.trim()) return 'Please enter your email address.';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value.trim())) return 'Please enter a valid email address.';
+        return '';
+      }
+
+      case 'phoneNumber': {
+        if (!value.trim()) return ''; // optional field
+        const phoneRegex = /^[+]?[\d\s-]{7,15}$/;
+        if (!phoneRegex.test(value.trim())) return 'Please enter a valid phone number.';
+        return '';
+      }
+
+      case 'message':
+        if (!value.trim()) return 'Please tell us how we can help you.';
+        if (value.trim().length < 10) return 'Message should be at least 10 characters.';
+        return '';
+
+      case 'companyName':
+        return ''; // optional field, no validation
+
+      default:
+        return '';
+    }
+  };
+
+  const validateAll = () => {
+    const newErrors = {};
+    Object.keys(formData).forEach((field) => {
+      const error = validateField(field, formData[field]);
+      if (error) newErrors[field] = error;
+    });
+    return newErrors;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear the error for this field as soon as the user edits it
+    if (errors[name]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
+  };
+
+  // Validate a single field the moment the user leaves it
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ type: null, message: '' });
+
+    const newErrors = validateAll();
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setStatus({ type: 'error', message: 'Please fix the highlighted fields before submitting.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${apiUrl}/contact-detail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setStatus({ type: 'success', message: data.message || 'Your message has been sent successfully!' });
+        setFormData({ name: '', companyName: '', email: '', phoneNumber: '', message: '' });
+        setErrors({});
+      } else {
+        setStatus({ type: 'error', message: data.message || 'Something went wrong. Please try again later.' });
+      }
+    } catch (err) {
+      console.error('Contact form submit error:', err);
+      setStatus({ type: 'error', message: 'Unable to reach the server. Please check your connection and try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const fieldBaseClass =
+    "bg-[#05080f]/50 border rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-2 transition duration-300";
+
+  const getFieldClass = (fieldName) =>
+    errors[fieldName]
+      ? `${fieldBaseClass} border-red-500/60 focus:border-red-500 focus:ring-red-500/15`
+      : `${fieldBaseClass} border-white/[0.08] focus:border-indigo-500 focus:ring-indigo-500/15`;
+
   return (
-    <section 
-      className="relative min-h-screen w-full overflow-hidden bg-[#05080f] px-5 py-10 lg:px-12 lg:py-20 flex items-center justify-center font-sans selection:bg-indigo-500/30 selection:text-white" 
+    <section
+      className="relative min-h-screen w-full overflow-hidden bg-[#05080f] px-5 py-10 lg:px-12 lg:py-20 flex items-center justify-center font-sans selection:bg-indigo-500/30 selection:text-white"
       aria-label="Contact Section"
       style={{
         backgroundImage: `linear-gradient(rgba(5, 8, 15, 0.88), rgba(5, 8, 15, 0.94)), url('${contact_background_image}')`,
@@ -146,7 +270,7 @@ export default function ContactHeroSection() {
 
       {/* Main Structural Container */}
       <div className="relative z-20 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-start">
-        
+
         {/* ── Left Content Panel ── */}
         <div className="flex flex-col space-y-6 lg:space-y-8">
           <div>
@@ -154,8 +278,8 @@ export default function ContactHeroSection() {
               We’re here to <span className="bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">help you.</span>
             </h1>
             <p className="text-sm lg:text-base text-slate-400 leading-relaxed max-w-xl">
-              Whether you need assistance with sales quotes, billing, or technical support, 
-              simply fill out the form to let us know how we can help you unlock insights 
+              Whether you need assistance with sales quotes, billing, or technical support,
+              simply fill out the form to let us know how we can help you unlock insights
               from your data to tell a clear story.
             </p>
           </div>
@@ -188,14 +312,14 @@ export default function ContactHeroSection() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Email Us</span>
-                <a href="mailto:itteams@technexwaredigital.com" className="text-sm text-slate-300 hover:text-blue-400 transition break-all">itteams@technexwaredigital.com</a>
+                <a href="mailto:technexwaredigital@gmail.com" className="text-sm text-slate-300 hover:text-blue-400 transition break-all">technexwaredigital@gmail.com</a>
               </div>
             </div>
           </div>
 
           {/* ── Google Maps Embedded Embed ── */}
           <div className="w-full h-64 lg:h-72 rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl relative group">
-            <iframe 
+            <iframe
               title="Google Map Location"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3503.4645239533355!2d77.31343717631317!3d28.585816975691068!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce4f62ca01053%3A0x6335133649fc61a1!2sE%20Block%2C%20Sector%2016%2C%20Noida%2C%20Uttar%20Pradesh%20201301!5e0!3m2!1sen!2sin!4v1710000000000!5m2!1sen!2sin"
               className="w-full h-full grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-90 transition-all duration-500"
@@ -209,7 +333,7 @@ export default function ContactHeroSection() {
 
         {/* ── Right Side 3D Interactive Form ── */}
         <div className="flex justify-center [perspective:1000px] w-full">
-          <div 
+          <div
             ref={cardRef}
             onMouseMove={handleCardMouseMove}
             onMouseLeave={handleCardMouseLeave}
@@ -218,35 +342,97 @@ export default function ContactHeroSection() {
           >
             <h2 className="text-xl lg:text-2xl font-bold text-slate-100 mb-1 [transform:translateZ(20px)]">What’s on your mind?</h2>
             <p className="text-xs lg:text-sm text-slate-500 mb-6 [transform:translateZ(15px)]">Tell us what you’re looking for and we’ll connect you.</p>
-            
-            <form className="flex flex-col space-y-4 [transform:translateZ(25px)]" onSubmit={(e) => e.preventDefault()}>
+
+            {/* ── Status Alert Banner ── */}
+            {status.type && (
+              <div
+                className={`mb-4 rounded-lg px-3.5 py-2.5 text-xs lg:text-sm border [transform:translateZ(20px)] ${
+                  status.type === 'success'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-red-500/10 border-red-500/30 text-red-300'
+                }`}
+                role="alert"
+              >
+                {status.message}
+              </div>
+            )}
+
+            <form className="flex flex-col space-y-4 [transform:translateZ(25px)]" onSubmit={handleSubmit} noValidate>
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Name</label>
-                <input type="text" className="bg-[#05080f]/50 border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition duration-300" placeholder="John Doe" required />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClass('name')}
+                  placeholder="John Doe"
+                />
+                {errors.name && <span className="text-[11px] text-red-400">{errors.name}</span>}
               </div>
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Company Name</label>
-                <input type="text" className="bg-[#05080f]/50 border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition duration-300" placeholder="Acme Corp" />
+                <input
+                  type="text"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClass('companyName')}
+                  placeholder="Acme Corp"
+                />
+                {errors.companyName && <span className="text-[11px] text-red-400">{errors.companyName}</span>}
               </div>
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Email Address</label>
-                <input type="email" className="bg-[#05080f]/50 border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition duration-300" placeholder="john@example.com" required />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClass('email')}
+                  placeholder="john@example.com"
+                />
+                {errors.email && <span className="text-[11px] text-red-400">{errors.email}</span>}
               </div>
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Phone Number</label>
-                <input type="tel" className="bg-[#05080f]/50 border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition duration-300" placeholder="+91 00000 00000" />
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={getFieldClass('phoneNumber')}
+                  placeholder="+91 00000 00000"
+                />
+                {errors.phoneNumber && <span className="text-[11px] text-red-400">{errors.phoneNumber}</span>}
               </div>
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Your Message</label>
-                <textarea className="bg-[#05080f]/50 border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 min-h-[90px] resize-vertical transition duration-300" placeholder="How can we help you unlock insights..." required></textarea>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={`${getFieldClass('message')} min-h-[90px] resize-vertical`}
+                  placeholder="How can we help you unlock insights..."
+                />
+                {errors.message && <span className="text-[11px] text-red-400">{errors.message}</span>}
               </div>
 
-              <button type="submit" className="mt-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-[#05080f] font-semibold text-sm py-3 rounded-lg hover:opacity-95 hover:-translate-y-0.5 active:translate-y-0 transition duration-200 shadow-lg shadow-indigo-500/10">
-                Send Message
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-[#05080f] font-semibold text-sm py-3 rounded-lg hover:opacity-95 hover:-translate-y-0.5 active:translate-y-0 transition duration-200 shadow-lg shadow-indigo-500/10 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </div>
